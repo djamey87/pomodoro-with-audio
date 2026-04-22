@@ -1,0 +1,209 @@
+import { create } from 'zustand';
+import type { Track, TimerSettings, TimerPhase } from '../types';
+
+interface TimerSlice {
+  phase: TimerPhase;
+  secondsRemaining: number;
+  pomodoroCount: number;
+  isRunning: boolean;
+  wasAudioPlayingOnPause: boolean;
+}
+
+interface AudioSlice {
+  isPlaying: boolean;
+  currentTrackIndex: number;
+  showNextTrackPrompt: boolean;
+}
+
+interface AppState {
+  timer: TimerSlice;
+  audio: AudioSlice;
+  playlist: Track[];
+  settings: TimerSettings;
+  showPlaylist: boolean;
+  showSettings: boolean;
+
+  // Timer actions
+  startTimer: () => void;
+  pauseTimer: (audioPlaying: boolean) => void;
+  stopTimer: () => void;
+  tickTimer: () => void;
+  advancePhase: () => void;
+  skipPhase: () => void;
+
+  // Audio actions
+  setAudioPlaying: (playing: boolean) => void;
+  setCurrentTrackIndex: (index: number) => void;
+  setShowNextTrackPrompt: (show: boolean) => void;
+  updateTrackPosition: (id: string, position: number) => void;
+  incrementPlayCount: (id: string) => void;
+
+  // Data actions (called after IPC load)
+  setPlaylist: (tracks: Track[]) => void;
+  addTrack: (track: Track) => void;
+  removeTrack: (id: string) => void;
+  updateSettings: (partial: Partial<TimerSettings>) => void;
+
+  // UI actions
+  setShowPlaylist: (show: boolean) => void;
+  setShowSettings: (show: boolean) => void;
+}
+
+function loadTimerState(): TimerSlice {
+  try {
+    const raw = localStorage.getItem('pomello.timer');
+    if (raw) return JSON.parse(raw) as TimerSlice;
+  } catch {
+    // ignore
+  }
+  return { phase: 'focus', secondsRemaining: 25 * 60, pomodoroCount: 0, isRunning: false, wasAudioPlayingOnPause: false };
+}
+
+function saveTimerState(state: TimerSlice) {
+  localStorage.setItem('pomello.timer', JSON.stringify(state));
+}
+
+export const useAppStore = create<AppState>((set, get) => ({
+  timer: { ...loadTimerState(), isRunning: false },
+  audio: { isPlaying: false, currentTrackIndex: 0, showNextTrackPrompt: false },
+  playlist: [],
+  settings: { focusMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 20, longBreakInterval: 4 },
+  showPlaylist: false,
+  showSettings: false,
+
+  startTimer: () => {
+    set(s => {
+      const next = { ...s.timer, isRunning: true };
+      saveTimerState(next);
+      return { timer: next };
+    });
+  },
+
+  pauseTimer: (audioPlaying) => {
+    set(s => {
+      const next = { ...s.timer, isRunning: false, wasAudioPlayingOnPause: audioPlaying };
+      saveTimerState(next);
+      return { timer: next };
+    });
+  },
+
+  stopTimer: () => {
+    set(s => {
+      const seconds = phaseSeconds(s.timer.phase, s.settings);
+      const next = { ...s.timer, isRunning: false, secondsRemaining: seconds, wasAudioPlayingOnPause: false };
+      saveTimerState(next);
+      return { timer: next };
+    });
+  },
+
+  tickTimer: () => {
+    set(s => {
+      const next = { ...s.timer, secondsRemaining: s.timer.secondsRemaining - 1 };
+      return { timer: next };
+    });
+  },
+
+  advancePhase: () => {
+    set(s => {
+      const { phase, pomodoroCount } = s.timer;
+      let nextPhase: TimerPhase;
+      let nextCount = pomodoroCount;
+
+      if (phase === 'focus') {
+        nextCount = pomodoroCount + 1;
+        nextPhase = nextCount % s.settings.longBreakInterval === 0 ? 'long-break' : 'short-break';
+      } else {
+        nextPhase = 'focus';
+      }
+
+      const next: TimerSlice = {
+        phase: nextPhase,
+        secondsRemaining: phaseSeconds(nextPhase, s.settings),
+        pomodoroCount: nextCount,
+        isRunning: false,
+        wasAudioPlayingOnPause: false,
+      };
+      saveTimerState(next);
+      return { timer: next };
+    });
+  },
+
+  skipPhase: () => {
+    get().advancePhase();
+  },
+
+  setAudioPlaying: (playing) =>
+    set(s => ({ audio: { ...s.audio, isPlaying: playing } })),
+
+  setCurrentTrackIndex: (index) =>
+    set(s => ({ audio: { ...s.audio, currentTrackIndex: index, showNextTrackPrompt: false } })),
+
+  setShowNextTrackPrompt: (show) =>
+    set(s => ({ audio: { ...s.audio, showNextTrackPrompt: show } })),
+
+  updateTrackPosition: (id, position) =>
+    set(s => {
+      const playlist = s.playlist.map(t => (t.id === id ? { ...t, savedPosition: position } : t));
+      window.api.setStore({ playlist, settings: s.settings });
+      return { playlist };
+    }),
+
+  incrementPlayCount: (id) => {
+    set(s => {
+      const playlist = s.playlist.map(t =>
+        t.id === id ? { ...t, playCount: (t.playCount ?? 0) + 1 } : t,
+      );
+      window.api.setStore({ playlist, settings: s.settings });
+      return { playlist };
+    });
+  },
+
+  setPlaylist: (tracks) => set({ playlist: tracks }),
+
+  addTrack: (track) => {
+    set(s => {
+      if (s.playlist.some(t => t.id === track.id)) return s;
+      const playlist = [...s.playlist, track];
+      window.api.setStore({ playlist, settings: s.settings });
+      return { playlist };
+    });
+  },
+
+  removeTrack: (id) => {
+    set(s => {
+      const playlist = s.playlist.filter(t => t.id !== id);
+      window.api.setStore({ playlist, settings: s.settings });
+      let currentIndex = s.audio.currentTrackIndex;
+      if (currentIndex >= playlist.length) currentIndex = Math.max(0, playlist.length - 1);
+      return { playlist, audio: { ...s.audio, currentTrackIndex: currentIndex } };
+    });
+  },
+
+  updateSettings: (partial) => {
+    set(s => {
+      const settings = { ...s.settings, ...partial };
+      window.api.setStore({ playlist: s.playlist, settings });
+      // Reset current phase seconds if not running
+      if (!s.timer.isRunning) {
+        const seconds = phaseSeconds(s.timer.phase, settings);
+        const timer = { ...s.timer, secondsRemaining: seconds };
+        saveTimerState(timer);
+        return { settings, timer };
+      }
+      return { settings };
+    });
+  },
+
+  setShowPlaylist: (show) => {
+    window.api.resizeWindow(show);
+    set({ showPlaylist: show });
+  },
+
+  setShowSettings: (show) => set({ showSettings: show }),
+}));
+
+function phaseSeconds(phase: TimerPhase, settings: TimerSettings): number {
+  if (phase === 'focus') return settings.focusMinutes * 60;
+  if (phase === 'short-break') return settings.shortBreakMinutes * 60;
+  return settings.longBreakMinutes * 60;
+}
