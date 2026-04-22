@@ -2,14 +2,18 @@ import React, { useState, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
 
 export function TaskFooter() {
-  const { showPlaylist, showSettings, setShowPlaylist, setShowSettings } = useAppStore();
-  const [task, setTask] = useState(() => localStorage.getItem('pomello.task') ?? '');
+  const { task, setTask, showPlaylist, showSettings, setShowPlaylist, setShowSettings } = useAppStore();
   const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  function startEditing() {
+    setDraft(task);
+    setEditing(true);
+  }
+
   function saveTask(value: string) {
-    setTask(value);
-    localStorage.setItem('pomello.task', value);
+    setTask(value.trim());
     setEditing(false);
   }
 
@@ -21,11 +25,11 @@ export function TaskFooter() {
           <input
             ref={inputRef}
             autoFocus
-            value={task}
-            onChange={e => setTask(e.target.value)}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
             onBlur={e => saveTask(e.target.value)}
             onKeyDown={e => {
-              if (e.key === 'Enter') saveTask(task);
+              if (e.key === 'Enter') saveTask(draft);
               if (e.key === 'Escape') setEditing(false);
             }}
             placeholder="What are you working on?"
@@ -33,7 +37,7 @@ export function TaskFooter() {
           />
         ) : (
           <button
-            onClick={() => setEditing(true)}
+            onClick={startEditing}
             className="text-xs text-left w-full text-slate-400 hover:text-slate-200 transition-colors truncate"
             title={task || 'Set task'}
           >

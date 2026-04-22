@@ -25,16 +25,6 @@ export function useTimer(audioRef: React.React.RefObject<HTMLAudioElement>) {
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  // Save timer state to localStorage every 10 seconds while running
-  useEffect(() => {
-    if (!isRunning) return;
-    const saveInterval = setInterval(() => {
-      const timer = useAppStore.getState().timer;
-      localStorage.setItem('pomello.timer', JSON.stringify(timer));
-    }, 10_000);
-    return () => clearInterval(saveInterval);
-  }, [isRunning]);
-
   // Resume audio when timer starts, if it was playing before the last pause
   useEffect(() => {
     const justStarted = isRunning && !prevIsRunning.current;

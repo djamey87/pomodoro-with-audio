@@ -20,6 +20,7 @@ interface AppState {
   audio: AudioSlice;
   playlist: Track[];
   settings: TimerSettings;
+  task: string;
   showPlaylist: boolean;
   showSettings: boolean;
 
@@ -43,6 +44,9 @@ interface AppState {
   addTrack: (track: Track) => void;
   removeTrack: (id: string) => void;
   updateSettings: (partial: Partial<TimerSettings>) => void;
+
+  // Task
+  setTask: (task: string) => void;
 
   // UI actions
   setShowPlaylist: (show: boolean) => void;
@@ -68,6 +72,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   audio: { isPlaying: false, currentTrackIndex: 0, showNextTrackPrompt: false },
   playlist: [],
   settings: { focusMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 20, longBreakInterval: 4 },
+  task: localStorage.getItem('pomello.task') ?? '',
   showPlaylist: false,
   showSettings: false,
 
@@ -99,6 +104,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   tickTimer: () => {
     set(s => {
       const next = { ...s.timer, secondsRemaining: s.timer.secondsRemaining - 1 };
+      saveTimerState(next);
       return { timer: next };
     });
   },
@@ -192,6 +198,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       return { settings };
     });
+  },
+
+  setTask: (task) => {
+    localStorage.setItem('pomello.task', task);
+    set({ task });
   },
 
   setShowPlaylist: (show) => {

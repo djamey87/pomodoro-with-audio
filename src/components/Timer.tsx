@@ -25,7 +25,7 @@ interface Props {
 }
 
 export function Timer({ isAudioPlaying }: Props) {
-  const { timer, settings, startTimer, pauseTimer, stopTimer, skipPhase } = useAppStore();
+  const { timer, settings, task, startTimer, pauseTimer, stopTimer, skipPhase } = useAppStore();
   const { phase, secondsRemaining, pomodoroCount, isRunning } = timer;
 
   const totalDots = settings.longBreakInterval;
@@ -60,9 +60,16 @@ export function Timer({ isAudioPlaying }: Props) {
 
       {/* Time */}
       <div className="flex items-center justify-between">
-        <span className="text-4xl font-mono font-bold tracking-tight text-slate-50">
-          {fmt(secondsRemaining)}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-4xl font-mono font-bold tracking-tight text-slate-50">
+            {fmt(secondsRemaining)}
+          </span>
+          {task && (
+            <span className="text-[10px] text-slate-500 truncate max-w-[180px]" title={task}>
+              {task}
+            </span>
+          )}
+        </div>
 
         {/* Controls */}
         <div className="flex gap-1.5 items-center no-drag">
