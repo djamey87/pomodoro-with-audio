@@ -7,6 +7,7 @@ interface TimerSlice {
   pomodoroCount: number;
   isRunning: boolean;
   wasAudioPlayingOnPause: boolean;
+  savedAt?: number;
 }
 
 interface AudioSlice {
@@ -53,22 +54,37 @@ interface AppState {
   setShowSettings: (show: boolean) => void;
 }
 
+const TIMER_DEFAULTS: TimerSlice = { phase: 'focus', secondsRemaining: 25 * 60, pomodoroCount: 0, isRunning: false, wasAudioPlayingOnPause: false };
+
 function loadTimerState(): TimerSlice {
   try {
     const raw = localStorage.getItem('pomello.timer');
-    if (raw) return JSON.parse(raw) as TimerSlice;
+    if (!raw) return TIMER_DEFAULTS;
+
+    const saved = JSON.parse(raw) as TimerSlice;
+
+    if (saved.isRunning && saved.savedAt) {
+      const elapsed = Math.floor((Date.now() - saved.savedAt) / 1000);
+      const remaining = saved.secondsRemaining - elapsed;
+      if (remaining > 0) {
+        return { ...saved, secondsRemaining: remaining };
+      }
+      // Timer expired while closed — leave at 0, not running
+      return { ...saved, isRunning: false, secondsRemaining: 0 };
+    }
+
+    return saved;
   } catch {
-    // ignore
+    return TIMER_DEFAULTS;
   }
-  return { phase: 'focus', secondsRemaining: 25 * 60, pomodoroCount: 0, isRunning: false, wasAudioPlayingOnPause: false };
 }
 
 function saveTimerState(state: TimerSlice) {
-  localStorage.setItem('pomello.timer', JSON.stringify(state));
+  localStorage.setItem('pomello.timer', JSON.stringify({ ...state, savedAt: Date.now() }));
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
-  timer: { ...loadTimerState(), isRunning: false },
+  timer: loadTimerState(),
   audio: { isPlaying: false, currentTrackIndex: 0, showNextTrackPrompt: false },
   playlist: [],
   settings: { focusMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 20, longBreakInterval: 4 },
