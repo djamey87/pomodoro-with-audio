@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 
 export function SettingsPanel() {
@@ -13,7 +14,7 @@ export function SettingsPanel() {
     <div className="absolute inset-0 bg-slate-900/97 backdrop-blur-sm flex flex-col z-40 no-drag">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700">
         <span className="text-xs font-semibold text-slate-300">Settings</span>
-        <button onClick={() => setShowSettings(false)} className="text-slate-500 hover:text-slate-300 text-xs">✕</button>
+        <button onClick={() => setShowSettings(false)} className="text-slate-500 hover:text-slate-300"><X size={13} /></button>
       </div>
       <div className="flex-1 px-4 py-3 flex flex-col gap-3 overflow-y-auto">
         <Field label="Focus (min)" value={settings.focusMinutes} onChange={v => handle('focusMinutes', v)} />

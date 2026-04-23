@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { X, Folder, Music, Check, Plus } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import type { BrowseResult } from '../types';
 
@@ -74,9 +75,10 @@ export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
         </div>
         <button
           onClick={() => setShowPlaylist(false)}
-          className="text-slate-500 hover:text-slate-300 text-xs px-2 py-1 no-drag"
+          className="text-slate-500 hover:text-slate-300 no-drag p-1"
+          title="Close"
         >
-          ✕ Close
+          <X size={13} />
         </button>
       </div>
 
@@ -113,7 +115,7 @@ export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
                     onClick={() => navigateTo(f.name, f.base64)}
                     className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700 transition-colors text-left"
                   >
-                    <span className="text-slate-500">📁</span>
+                    <Folder size={12} className="text-slate-500 shrink-0" />
                     <span className="truncate">{f.name}</span>
                   </button>
                 ))}
@@ -124,7 +126,7 @@ export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
                       key={f.id}
                       className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-700 transition-colors group"
                     >
-                      <span className="text-slate-500 text-xs">♪</span>
+                      <Music size={11} className="text-slate-500 shrink-0" />
                       <span className="flex-1 text-xs text-slate-300 truncate" title={f.name}>{f.name}</span>
                       <button
                         onClick={() => {
@@ -134,13 +136,13 @@ export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
                             addTrack({ id: f.id, title: f.name, url: f.url, savedPosition: 0, playCount: 0 });
                           }
                         }}
-                        className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 transition-colors ${
+                        className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded shrink-0 transition-colors ${
                           inPlaylist
                             ? 'bg-slate-600 text-slate-300 hover:bg-red-900 hover:text-red-300'
                             : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-slate-200'
                         }`}
                       >
-                        {inPlaylist ? '✓ Added' : '+ Add'}
+                        {inPlaylist ? <><Check size={10} /> Added</> : <><Plus size={10} /> Add</>}
                       </button>
                     </div>
                   );
@@ -170,8 +172,10 @@ export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
                   }`}
                   onClick={() => onSelectTrack(i)}
                 >
-                  <span className={`text-[10px] w-4 text-center ${i === audio.currentTrackIndex ? 'text-orange-400' : 'text-slate-600'}`}>
-                    {i === audio.currentTrackIndex ? '▶' : (i + 1)}
+                  <span className={`w-4 flex items-center justify-center ${i === audio.currentTrackIndex ? 'text-orange-400' : 'text-slate-600'}`}>
+                    {i === audio.currentTrackIndex
+                      ? <svg width="8" height="8" viewBox="0 0 8 8"><polygon points="1,1 7,4 1,7" fill="currentColor" /></svg>
+                      : <span className="text-[10px]">{i + 1}</span>}
                   </span>
                   <span className="flex-1 text-xs text-slate-300 truncate" title={track.title}>{track.title}</span>
                   {(track.playCount ?? 0) > 0 && (
@@ -181,10 +185,10 @@ export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
                   )}
                   <button
                     onClick={e => { e.stopPropagation(); removeTrack(track.id); }}
-                    className="text-[10px] text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 px-1"
+                    className="text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 px-1"
                     title="Remove"
                   >
-                    ✕
+                    <X size={11} />
                   </button>
                 </div>
               ))}

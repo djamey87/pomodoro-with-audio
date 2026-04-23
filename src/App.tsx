@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Minus, X } from 'lucide-react';
 import { useAppStore } from './store/appStore';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useTimer } from './hooks/useTimer';
@@ -44,15 +45,15 @@ export default function App() {
         <div className="no-drag flex items-center gap-0.5">
           <button
             onClick={() => window.api.minimize()}
-            className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-200 text-xs transition-colors"
+            className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
           >
-            ─
+            <Minus size={12} />
           </button>
           <button
             onClick={() => window.api.close()}
-            className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-red-400 text-xs transition-colors"
+            className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-red-400 transition-colors"
           >
-            ✕
+            <X size={12} />
           </button>
         </div>
       </div>

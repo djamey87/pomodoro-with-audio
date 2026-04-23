@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { SkipBack, SkipForward, Play, Pause, Volume, Volume1, Volume2, VolumeX } from 'lucide-react';
 import type { Track } from '../types';
 
 interface Props {
@@ -24,10 +25,10 @@ function fmtTime(s: number): string {
 }
 
 function VolumeIcon({ volume }: { volume: number }) {
-  if (volume === 0) return <span title="Muted">🔇</span>;
-  if (volume < 0.4) return <span title="Low">🔈</span>;
-  if (volume < 0.75) return <span title="Medium">🔉</span>;
-  return <span title="High">🔊</span>;
+  if (volume === 0) return <VolumeX size={14} />;
+  if (volume < 0.4) return <Volume size={14} />;
+  if (volume < 0.75) return <Volume1 size={14} />;
+  return <Volume2 size={14} />;
 }
 
 export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlay, onPause, onEnded, onPlayNext, onPlayPrev, onTogglePlay, onSeek, onVolumeChange }: Props) {
@@ -80,9 +81,9 @@ export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlay, onPaus
       />
 
       {/* Track name + time */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-300 font-medium truncate max-w-[220px]" title={track.title}>
-          ♪ {track.title}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs text-slate-300 font-medium truncate" title={track.title}>
+          {track.title}
         </span>
         <span className="text-[10px] text-slate-500 tabular-nums shrink-0">
           {fmtTime(current)} / {fmtTime(duration)}
@@ -92,7 +93,7 @@ export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlay, onPaus
       {/* Progress bar */}
       <div
         ref={progressRef}
-        className="h-1 rounded-full bg-slate-700 cursor-pointer no-drag"
+        className="h-0.5 rounded-full bg-slate-700 cursor-pointer no-drag"
         onClick={handleProgressClick}
       >
         <div
@@ -103,18 +104,18 @@ export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlay, onPaus
 
       {/* Controls + volume */}
       <div className="flex items-center justify-between no-drag">
-        <div className="flex items-center gap-2">
-          <button onClick={onPlayPrev} className="text-slate-400 hover:text-slate-200 text-sm transition-colors" title="Previous">
-            ⏮
+        <div className="flex items-center gap-3">
+          <button onClick={onPlayPrev} className="text-slate-400 hover:text-slate-200 transition-colors" title="Previous">
+            <SkipBack size={14} />
           </button>
           <button
             onClick={onTogglePlay}
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-700 hover:bg-slate-600 text-slate-100 transition-colors"
           >
-            {isPlaying ? '⏸' : '▶'}
+            {isPlaying ? <Pause size={13} /> : <Play size={13} />}
           </button>
-          <button onClick={onPlayNext} className="text-slate-400 hover:text-slate-200 text-sm transition-colors" title="Next">
-            ⏭
+          <button onClick={onPlayNext} className="text-slate-400 hover:text-slate-200 transition-colors" title="Next">
+            <SkipForward size={14} />
           </button>
         </div>
 
@@ -122,7 +123,8 @@ export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlay, onPaus
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => onVolumeChange(volume === 0 ? 0.8 : 0)}
-            className="text-[13px] text-slate-400 hover:text-slate-200 transition-colors leading-none"
+            className="text-slate-400 hover:text-slate-200 transition-colors"
+            title={`Volume: ${Math.round(volume * 100)}%`}
           >
             <VolumeIcon volume={volume} />
           </button>
@@ -133,7 +135,7 @@ export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlay, onPaus
             step={0.02}
             value={volume}
             onChange={e => onVolumeChange(parseFloat(e.target.value))}
-            className="w-20 h-1 accent-slate-400 cursor-pointer"
+            className="w-20 h-0.5 accent-slate-400 cursor-pointer"
             title={`Volume: ${Math.round(volume * 100)}%`}
           />
         </div>

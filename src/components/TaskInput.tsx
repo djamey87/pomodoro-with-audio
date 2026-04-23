@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Music, Settings } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 
 export function TaskFooter() {
@@ -50,18 +51,18 @@ export function TaskFooter() {
       <button
         onClick={() => setShowPlaylist(!showPlaylist)}
         title="Music"
-        className={`text-sm no-drag transition-colors ${showPlaylist ? 'text-orange-400' : 'text-slate-500 hover:text-slate-300'}`}
+        className={`no-drag transition-colors ${showPlaylist ? 'text-orange-400' : 'text-slate-500 hover:text-slate-300'}`}
       >
-        ♫
+        <Music size={13} />
       </button>
 
       {/* Settings */}
       <button
         onClick={() => setShowSettings(!showSettings)}
         title="Settings"
-        className={`text-xs no-drag transition-colors ${showSettings ? 'text-orange-400' : 'text-slate-500 hover:text-slate-300'}`}
+        className={`no-drag transition-colors ${showSettings ? 'text-orange-400' : 'text-slate-500 hover:text-slate-300'}`}
       >
-        ⚙
+        <Settings size={13} />
       </button>
     </div>
   );

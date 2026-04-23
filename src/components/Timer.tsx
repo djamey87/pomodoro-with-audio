@@ -1,4 +1,5 @@
 import React from 'react';
+import { Play, Pause, Square, SkipForward } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import type { TimerPhase } from '../types';
 
@@ -48,12 +49,13 @@ export function Timer({ isAudioPlaying }: Props) {
         </span>
         <span className="flex gap-0.5">
           {Array.from({ length: totalDots }).map((_, i) => (
-            <span
-              key={i}
-              className={`text-[10px] ${i < filledDots ? PHASE_COLOR[phase] : 'text-slate-600'}`}
-            >
-              ●
-            </span>
+            <svg key={i} width="6" height="6" viewBox="0 0 6 6">
+              <circle
+                cx="3" cy="3" r="2.5"
+                className={i < filledDots ? PHASE_COLOR[phase] : 'text-slate-600'}
+                fill="currentColor"
+              />
+            </svg>
           ))}
         </span>
       </div>
@@ -75,23 +77,23 @@ export function Timer({ isAudioPlaying }: Props) {
         <div className="flex gap-1.5 items-center no-drag">
           <button
             onClick={handleStartPause}
-            className="px-3 py-1.5 rounded text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-100 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-100 transition-colors"
           >
-            {isRunning ? '⏸ Pause' : '▶ Start'}
+            {isRunning ? <><Pause size={11} /> Pause</> : <><Play size={11} /> Start</>}
           </button>
           <button
             onClick={stopTimer}
             title="Stop & reset"
-            className="px-2 py-1.5 rounded text-xs bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors"
+            className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors"
           >
-            ■
+            <Square size={11} />
           </button>
           <button
             onClick={skipPhase}
             title="Skip phase"
-            className="px-2 py-1.5 rounded text-xs bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors"
+            className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors"
           >
-            ⏭
+            <SkipForward size={11} />
           </button>
         </div>
       </div>

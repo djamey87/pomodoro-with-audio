@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Play } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 
 interface Props {
@@ -32,9 +33,9 @@ export function NextTrackPrompt({ onAccept, onDismiss }: Props) {
       <div className="flex gap-2">
         <button
           onClick={onAccept}
-          className="px-4 py-1.5 rounded bg-slate-600 hover:bg-slate-500 text-xs text-slate-100 font-medium transition-colors"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded bg-slate-600 hover:bg-slate-500 text-xs text-slate-100 font-medium transition-colors"
         >
-          ▶ Play ({countdown}s)
+          <Play size={11} /> Play ({countdown}s)
         </button>
         <button
           onClick={onDismiss}
