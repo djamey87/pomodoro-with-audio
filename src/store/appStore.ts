@@ -83,9 +83,27 @@ function saveTimerState(state: TimerSlice) {
   localStorage.setItem('pomello.timer', JSON.stringify({ ...state, savedAt: Date.now() }));
 }
 
+function loadAudioState(): Pick<AudioSlice, 'currentTrackIndex' | 'isPlaying'> {
+  try {
+    const raw = localStorage.getItem('pomello.audio');
+    if (raw) {
+      const s = JSON.parse(raw);
+      return {
+        currentTrackIndex: typeof s.currentTrackIndex === 'number' ? s.currentTrackIndex : 0,
+        isPlaying: typeof s.isPlaying === 'boolean' ? s.isPlaying : false,
+      };
+    }
+  } catch { /* ignore */ }
+  return { currentTrackIndex: 0, isPlaying: false };
+}
+
+function saveAudioState(currentTrackIndex: number, isPlaying: boolean) {
+  localStorage.setItem('pomello.audio', JSON.stringify({ currentTrackIndex, isPlaying }));
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   timer: loadTimerState(),
-  audio: { isPlaying: false, currentTrackIndex: 0, showNextTrackPrompt: false },
+  audio: { ...loadAudioState(), showNextTrackPrompt: false },
   playlist: [],
   settings: { focusMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 20, longBreakInterval: 4 },
   task: localStorage.getItem('pomello.task') ?? '',
@@ -155,10 +173,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setAudioPlaying: (playing) =>
-    set(s => ({ audio: { ...s.audio, isPlaying: playing } })),
+    set(s => {
+      saveAudioState(s.audio.currentTrackIndex, playing);
+      return { audio: { ...s.audio, isPlaying: playing } };
+    }),
 
   setCurrentTrackIndex: (index) =>
-    set(s => ({ audio: { ...s.audio, currentTrackIndex: index, showNextTrackPrompt: false } })),
+    set(s => {
+      saveAudioState(index, s.audio.isPlaying);
+      return { audio: { ...s.audio, currentTrackIndex: index, showNextTrackPrompt: false } };
+    }),
 
   setShowNextTrackPrompt: (show) =>
     set(s => ({ audio: { ...s.audio, showNextTrackPrompt: show } })),

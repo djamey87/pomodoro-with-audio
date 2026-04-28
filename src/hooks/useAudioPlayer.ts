@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useAppStore } from '../store/appStore';
 
 function loadVolume(): number {
@@ -16,18 +16,28 @@ export function useAudioPlayer() {
 
   const currentTrack = playlist[audio.currentTrackIndex] ?? null;
 
+  // On initial mount, auto-play if audio was playing when the app last closed
+  const shouldAutoPlayOnMount = useMemo(() => audio.isPlaying, []);
+  const isInitialMount = useRef(true);
+
   // Apply volume whenever it changes or the audio element mounts
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
-  // Restore saved position when the current track changes
+  // Restore saved position when the current track changes; auto-play on first mount if needed
   useEffect(() => {
     const el = audioRef.current;
     if (!el || !currentTrack) return;
 
     const pos = currentTrack.savedPosition ?? 0;
-    const applyPosition = () => { el.currentTime = pos; };
+    const autoPlay = isInitialMount.current && shouldAutoPlayOnMount;
+    isInitialMount.current = false;
+
+    const applyPosition = () => {
+      el.currentTime = pos;
+      if (autoPlay) el.play().catch(() => undefined);
+    };
 
     if (el.readyState >= 1) {
       applyPosition();
