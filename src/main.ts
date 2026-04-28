@@ -73,8 +73,13 @@ app.whenReady().then(() => {
     browseSoundtracks(folderBase64),
   );
 
-  // Native phase-change notification
+  // Native phase-change notification + restore window
   ipcMain.on('notify-phase', (_e, body: string) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
     if (Notification.isSupported()) {
       new Notification({ title: 'Pomodoro', body }).show();
     }
