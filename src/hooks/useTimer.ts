@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
+import { playChime } from '../chime';
 
 export function useTimer(audioRef: React.React.RefObject<HTMLAudioElement>) {
   const isRunning = useAppStore(s => s.timer.isRunning);
@@ -15,6 +16,7 @@ export function useTimer(audioRef: React.React.RefObject<HTMLAudioElement>) {
       if (store.timer.secondsRemaining <= 1) {
         const phase = store.timer.phase;
         store.advancePhase();
+        playChime();
         const label = phase === 'focus' ? 'Break time!' : 'Time to focus!';
         window.api.notifyPhase(label);
       } else {
