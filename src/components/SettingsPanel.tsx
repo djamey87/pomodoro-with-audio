@@ -11,7 +11,7 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="absolute inset-0 bg-slate-900/97 backdrop-blur-sm flex flex-col z-40 no-drag">
+    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md flex flex-col z-40 no-drag">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700">
         <span className="text-xs font-semibold text-slate-300">Settings</span>
         <button onClick={() => setShowSettings(false)} className="text-slate-500 hover:text-slate-300"><X size={13} /></button>
