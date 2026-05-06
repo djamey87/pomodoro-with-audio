@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session, Notification } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, session, Notification } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { initStore, readStore, writeStore } from './storeService';
@@ -62,6 +62,23 @@ app.whenReady().then(() => {
     const height = expanded ? 560 : 270;
     mainWindow.setSize(400, height, true);
     mainWindow.setResizable(false);
+  });
+
+  // Compact mode — small window pinned to bottom-right of current display
+  ipcMain.on('set-compact-mode', (_e, compact: boolean) => {
+    if (!mainWindow) return;
+    if (compact) {
+      const w = 260, h = 135;
+      mainWindow.setMinimumSize(w, h);
+      mainWindow.setSize(w, h, false);
+      const display = screen.getDisplayNearestPoint(mainWindow.getBounds());
+      const { x, y, width, height } = display.workArea;
+      const margin = 16;
+      mainWindow.setPosition(x + width - w - margin, y + height - h - margin, false);
+    } else {
+      mainWindow.setMinimumSize(400, 270);
+      mainWindow.setSize(400, 270, false);
+    }
   });
 
   // Persistent store

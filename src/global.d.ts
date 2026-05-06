@@ -6,6 +6,7 @@ declare global {
       minimize: () => void;
       close: () => void;
       resizeWindow: (expanded: boolean) => void;
+      setCompactMode: (compact: boolean) => void;
       getStore: () => Promise<AppData>;
       setStore: (data: AppData) => Promise<void>;
       browseSoundtracks: (folderBase64: string) => Promise<BrowseResult>;

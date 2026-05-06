@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('api', {
   minimize: () => ipcRenderer.send('window-minimize'),
   close: () => ipcRenderer.send('window-close'),
   resizeWindow: (expanded: boolean) => ipcRenderer.send('resize-window', expanded),
+  setCompactMode: (compact: boolean) => ipcRenderer.send('set-compact-mode', compact),
   getStore: (): Promise<AppData> => ipcRenderer.invoke('get-store'),
   setStore: (data: AppData): Promise<void> => ipcRenderer.invoke('set-store', data),
   browseSoundtracks: (folderBase64: string): Promise<BrowseResult> =>

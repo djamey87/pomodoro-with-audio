@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Minus, X } from 'lucide-react';
+import { Minus, X, Minimize2 } from 'lucide-react';
 import { useAppStore } from './store/appStore';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useTimer } from './hooks/useTimer';
@@ -10,9 +10,10 @@ import { PlaylistBrowser } from './components/PlaylistBrowser';
 import { NextTrackPrompt } from './components/NextTrackPrompt';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SessionHistoryPanel } from './components/SessionHistoryPanel';
+import { CompactView } from './components/CompactView';
 
 export default function App() {
-  const { setPlaylist, updateSettings, setSessions, showPlaylist, showSettings, showHistory, audio } = useAppStore();
+  const { setPlaylist, updateSettings, setSessions, showPlaylist, showSettings, showHistory, compactMode, setCompactMode, audio } = useAppStore();
 
   // Load persisted playlist + settings + sessions from main process on mount
   useEffect(() => {
@@ -21,6 +22,11 @@ export default function App() {
       updateSettings(data.settings);
       setSessions(data.sessions ?? []);
     });
+  }, []);
+
+  // Sync persisted compactMode to main process on mount (resizes window)
+  useEffect(() => {
+    if (compactMode) window.api.setCompactMode(true);
   }, []);
 
   // Audio player hook — owns the <audio> ref
@@ -39,12 +45,48 @@ export default function App() {
     useAppStore.getState().setShowNextTrackPrompt(false);
   }
 
+  // The <audio> element lives at the root so it survives switching between
+  // compact and normal views — otherwise toggling would unmount and stop playback.
+  const audioElement = (
+    <audio
+      ref={audioRef}
+      src={currentTrack?.url}
+      onPlay={handlePlay}
+      onPause={handlePause}
+      onEnded={handleEnded}
+      preload="metadata"
+    />
+  );
+
+  if (compactMode) {
+    return (
+      <>
+        {audioElement}
+        <CompactView
+          audioRef={audioRef}
+          isAudioPlaying={audio.isPlaying}
+          trackTitle={currentTrack?.title ?? null}
+          onTogglePlayAudio={togglePlay}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-slate-900 text-slate-100 select-none overflow-hidden relative">
+      {audioElement}
+
       {/* Titlebar — drag region */}
       <div className="drag-region flex items-center justify-between px-3 shrink-0 h-8 bg-slate-800 border-b border-slate-700">
         <span className="text-[11px] text-slate-400 font-medium tracking-wide">Pomodoro</span>
         <div className="no-drag flex items-center gap-0.5">
+          <button
+            onClick={() => setCompactMode(true)}
+            title="Compact mode"
+            className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
+          >
+            <Minimize2 size={11} />
+          </button>
           <button
             onClick={() => window.api.minimize()}
             className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
@@ -67,9 +109,6 @@ export default function App() {
         track={currentTrack}
         isPlaying={audio.isPlaying}
         volume={volume}
-        onPlay={handlePlay}
-        onPause={handlePause}
-        onEnded={handleEnded}
         onTogglePlay={togglePlay}
         onPlayNext={playNext}
         onPlayPrev={playPrev}

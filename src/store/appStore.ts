@@ -26,6 +26,7 @@ interface AppState {
   showPlaylist: boolean;
   showSettings: boolean;
   showHistory: boolean;
+  compactMode: boolean;
 
   // Timer actions
   startTimer: () => void;
@@ -60,6 +61,7 @@ interface AppState {
   setShowPlaylist: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
   setShowHistory: (show: boolean) => void;
+  setCompactMode: (compact: boolean) => void;
 }
 
 const TIMER_DEFAULTS: TimerSlice = { phase: 'focus', secondsRemaining: 25 * 60, pomodoroCount: 0, isRunning: false, wasAudioPlayingOnPause: false };
@@ -119,6 +121,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   showPlaylist: false,
   showSettings: false,
   showHistory: false,
+  compactMode: localStorage.getItem('pomello.compactMode') === '1',
 
   startTimer: () => {
     set(s => {
@@ -298,6 +301,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   setShowSettings: (show) => set({ showSettings: show }),
 
   setShowHistory: (show) => set({ showHistory: show }),
+
+  setCompactMode: (compact) => {
+    localStorage.setItem('pomello.compactMode', compact ? '1' : '0');
+    window.api.setCompactMode(compact);
+    if (compact) {
+      // Compact mode forces playlist drawer closed (would overflow)
+      set({ compactMode: true, showPlaylist: false, showSettings: false, showHistory: false });
+    } else {
+      set({ compactMode: false });
+    }
+  },
 }));
 
 function phaseSeconds(phase: TimerPhase, settings: TimerSettings): number {

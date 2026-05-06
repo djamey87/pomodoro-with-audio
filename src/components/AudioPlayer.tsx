@@ -7,9 +7,6 @@ interface Props {
   track: Track | null;
   isPlaying: boolean;
   volume: number;
-  onPlay: () => void;
-  onPause: () => void;
-  onEnded: () => void;
   onPlayNext: () => void;
   onPlayPrev: () => void;
   onTogglePlay: () => void;
@@ -31,7 +28,7 @@ function VolumeIcon({ volume }: { volume: number }) {
   return <Volume2 size={14} />;
 }
 
-export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlay, onPause, onEnded, onPlayNext, onPlayPrev, onTogglePlay, onSeek, onVolumeChange }: Props) {
+export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlayNext, onPlayPrev, onTogglePlay, onSeek, onVolumeChange }: Props) {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [current, setCurrent] = useState(0);
@@ -67,19 +64,20 @@ export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlay, onPaus
     );
   }
 
+  // Subscribe to time updates from the lifted <audio> element
+  React.useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.addEventListener('timeupdate', handleTimeUpdate);
+    el.addEventListener('loadedmetadata', handleLoadedMetadata);
+    return () => {
+      el.removeEventListener('timeupdate', handleTimeUpdate);
+      el.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [handleTimeUpdate, handleLoadedMetadata, audioRef.current]);
+
   return (
     <div className="border-t border-slate-700 px-4 py-2.5 flex flex-col gap-1.5">
-      <audio
-        ref={audioRef}
-        src={track.url}
-        onPlay={onPlay}
-        onPause={onPause}
-        onEnded={onEnded}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        preload="metadata"
-      />
-
       {/* Track name + time */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-slate-300 font-medium truncate" title={track.title}>
