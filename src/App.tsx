@@ -9,9 +9,10 @@ import { TaskFooter } from './components/TaskInput';
 import { PlaylistBrowser } from './components/PlaylistBrowser';
 import { NextTrackPrompt } from './components/NextTrackPrompt';
 import { SettingsPanel } from './components/SettingsPanel';
+import { SessionHistoryPanel } from './components/SessionHistoryPanel';
 
 export default function App() {
-  const { setPlaylist, updateSettings, setSessions, showPlaylist, showSettings, audio } = useAppStore();
+  const { setPlaylist, updateSettings, setSessions, showPlaylist, showSettings, showHistory, audio } = useAppStore();
 
   // Load persisted playlist + settings + sessions from main process on mount
   useEffect(() => {
@@ -82,6 +83,9 @@ export default function App() {
 
       {/* Settings overlay */}
       {showSettings && <SettingsPanel />}
+
+      {/* History overlay */}
+      {showHistory && <SessionHistoryPanel />}
 
       {/* Next-track prompt overlay */}
       {audio.showNextTrackPrompt && (

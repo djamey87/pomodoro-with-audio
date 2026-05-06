@@ -25,6 +25,7 @@ interface AppState {
   task: string;
   showPlaylist: boolean;
   showSettings: boolean;
+  showHistory: boolean;
 
   // Timer actions
   startTimer: () => void;
@@ -58,6 +59,7 @@ interface AppState {
   // UI actions
   setShowPlaylist: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
+  setShowHistory: (show: boolean) => void;
 }
 
 const TIMER_DEFAULTS: TimerSlice = { phase: 'focus', secondsRemaining: 25 * 60, pomodoroCount: 0, isRunning: false, wasAudioPlayingOnPause: false };
@@ -116,6 +118,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   task: localStorage.getItem('pomello.task') ?? '',
   showPlaylist: false,
   showSettings: false,
+  showHistory: false,
 
   startTimer: () => {
     set(s => {
@@ -293,6 +296,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setShowSettings: (show) => set({ showSettings: show }),
+
+  setShowHistory: (show) => set({ showHistory: show }),
 }));
 
 function phaseSeconds(phase: TimerPhase, settings: TimerSettings): number {
