@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Track, TimerSettings, TimerPhase } from '../types';
+import type { Track, TimerSettings, TimerPhase, SessionRecord, SessionEndReason } from '../types';
 
 interface TimerSlice {
   phase: TimerPhase;
@@ -21,6 +21,7 @@ interface AppState {
   audio: AudioSlice;
   playlist: Track[];
   settings: TimerSettings;
+  sessions: SessionRecord[];
   task: string;
   showPlaylist: boolean;
   showSettings: boolean;
@@ -45,6 +46,11 @@ interface AppState {
   addTrack: (track: Track) => void;
   removeTrack: (id: string) => void;
   updateSettings: (partial: Partial<TimerSettings>) => void;
+
+  // Sessions
+  setSessions: (sessions: SessionRecord[]) => void;
+  recordFocusSession: (endReason: SessionEndReason) => void;
+  deleteSession: (id: string) => void;
 
   // Task
   setTask: (task: string) => void;
@@ -106,6 +112,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   audio: { ...loadAudioState(), showNextTrackPrompt: false },
   playlist: [],
   settings: { focusMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 20, longBreakInterval: 4 },
+  sessions: [],
   task: localStorage.getItem('pomello.task') ?? '',
   showPlaylist: false,
   showSettings: false,
@@ -127,6 +134,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   stopTimer: () => {
+    get().recordFocusSession('stopped');
     set(s => {
       const seconds = phaseSeconds(s.timer.phase, s.settings);
       const next = { ...s.timer, isRunning: false, secondsRemaining: seconds, wasAudioPlayingOnPause: false };
@@ -169,6 +177,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   skipPhase: () => {
+    get().recordFocusSession('skipped');
     get().advancePhase();
   },
 
@@ -190,7 +199,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateTrackPosition: (id, position) =>
     set(s => {
       const playlist = s.playlist.map(t => (t.id === id ? { ...t, savedPosition: position } : t));
-      window.api.setStore({ playlist, settings: s.settings });
+      window.api.setStore({ playlist, settings: s.settings, sessions: s.sessions });
       return { playlist };
     }),
 
@@ -199,7 +208,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const playlist = s.playlist.map(t =>
         t.id === id ? { ...t, playCount: (t.playCount ?? 0) + 1 } : t,
       );
-      window.api.setStore({ playlist, settings: s.settings });
+      window.api.setStore({ playlist, settings: s.settings, sessions: s.sessions });
       return { playlist };
     });
   },
@@ -210,7 +219,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set(s => {
       if (s.playlist.some(t => t.id === track.id)) return s;
       const playlist = [...s.playlist, track];
-      window.api.setStore({ playlist, settings: s.settings });
+      window.api.setStore({ playlist, settings: s.settings, sessions: s.sessions });
       return { playlist };
     });
   },
@@ -218,7 +227,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   removeTrack: (id) => {
     set(s => {
       const playlist = s.playlist.filter(t => t.id !== id);
-      window.api.setStore({ playlist, settings: s.settings });
+      window.api.setStore({ playlist, settings: s.settings, sessions: s.sessions });
       let currentIndex = s.audio.currentTrackIndex;
       if (currentIndex >= playlist.length) currentIndex = Math.max(0, playlist.length - 1);
       return { playlist, audio: { ...s.audio, currentTrackIndex: currentIndex } };
@@ -228,7 +237,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateSettings: (partial) => {
     set(s => {
       const settings = { ...s.settings, ...partial };
-      window.api.setStore({ playlist: s.playlist, settings });
+      window.api.setStore({ playlist: s.playlist, settings, sessions: s.sessions });
       // Reset current phase seconds if not running
       if (!s.timer.isRunning) {
         const seconds = phaseSeconds(s.timer.phase, settings);
@@ -239,6 +248,39 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { settings };
     });
   },
+
+  setSessions: (sessions) => set({ sessions }),
+
+  recordFocusSession: (endReason) =>
+    set(s => {
+      if (s.timer.phase !== 'focus') return s;
+      const configured = s.settings.focusMinutes * 60;
+      const elapsed = Math.max(0, configured - s.timer.secondsRemaining);
+      if (elapsed < 5) return s;
+
+      const track = s.playlist[s.audio.currentTrackIndex];
+      const record: SessionRecord = {
+        id: crypto.randomUUID(),
+        endedAt: Date.now(),
+        durationSeconds: elapsed,
+        configuredSeconds: configured,
+        endReason,
+        task: s.task,
+        trackId: track?.id,
+        trackTitle: track?.title,
+      };
+
+      const sessions = [...s.sessions, record];
+      window.api.setStore({ playlist: s.playlist, settings: s.settings, sessions });
+      return { sessions };
+    }),
+
+  deleteSession: (id) =>
+    set(s => {
+      const sessions = s.sessions.filter(r => r.id !== id);
+      window.api.setStore({ playlist: s.playlist, settings: s.settings, sessions });
+      return { sessions };
+    }),
 
   setTask: (task) => {
     localStorage.setItem('pomello.task', task);

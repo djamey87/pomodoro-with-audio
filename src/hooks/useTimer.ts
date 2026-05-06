@@ -15,6 +15,7 @@ export function useTimer(audioRef: React.React.RefObject<HTMLAudioElement>) {
       const store = useAppStore.getState();
       if (store.timer.secondsRemaining <= 1) {
         const phase = store.timer.phase;
+        store.recordFocusSession('completed');
         store.advancePhase();
         playChime();
         const label = phase === 'focus' ? 'Break time!' : 'Time to focus!';

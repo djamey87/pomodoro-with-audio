@@ -13,9 +13,23 @@ export interface TimerSettings {
   longBreakInterval: number;
 }
 
+export type SessionEndReason = 'completed' | 'skipped' | 'stopped';
+
+export interface SessionRecord {
+  id: string;
+  endedAt: number;
+  durationSeconds: number;
+  configuredSeconds: number;
+  endReason: SessionEndReason;
+  task: string;
+  trackId?: string;
+  trackTitle?: string;
+}
+
 export interface AppData {
   playlist: Track[];
   settings: TimerSettings;
+  sessions: SessionRecord[];
 }
 
 export type TimerPhase = 'focus' | 'short-break' | 'long-break';

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Folder, Music, Check, Plus } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { SessionHistory } from './SessionHistory';
 import type { BrowseResult } from '../types';
 
 const ROOT_BASE64 = 'MS4gTW92aWVz'; // "1. Movies" — default starting folder
@@ -15,14 +16,14 @@ interface PlaylistBrowserProps {
 }
 
 export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
-  const { playlist, addTrack, removeTrack, audio, setShowPlaylist } = useAppStore();
+  const { playlist, addTrack, removeTrack, audio, sessions, setShowPlaylist } = useAppStore();
   const [browseResult, setBrowseResult] = useState<BrowseResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([
     { name: 'Movies', base64: ROOT_BASE64 },
   ]);
-  const [activeTab, setActiveTab] = useState<'browse' | 'playlist'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'playlist' | 'history'>('browse');
 
   const currentFolder = breadcrumb[breadcrumb.length - 1];
 
@@ -71,6 +72,12 @@ export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
             className={`px-3 py-1 text-xs transition-colors ${activeTab === 'playlist' ? 'bg-slate-600 text-slate-100' : 'text-slate-400 hover:text-slate-200'}`}
           >
             Playlist {playlist.length > 0 && `(${playlist.length})`}
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-3 py-1 text-xs transition-colors ${activeTab === 'history' ? 'bg-slate-600 text-slate-100' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            History {sessions.length > 0 && `(${sessions.length})`}
           </button>
         </div>
         <button
@@ -194,6 +201,12 @@ export function PlaylistBrowser({ onSelectTrack }: PlaylistBrowserProps) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'history' && (
+        <div className="flex-1 overflow-y-auto">
+          <SessionHistory />
         </div>
       )}
     </div>

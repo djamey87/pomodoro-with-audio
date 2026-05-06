@@ -11,13 +11,14 @@ import { NextTrackPrompt } from './components/NextTrackPrompt';
 import { SettingsPanel } from './components/SettingsPanel';
 
 export default function App() {
-  const { setPlaylist, updateSettings, showPlaylist, showSettings, audio } = useAppStore();
+  const { setPlaylist, updateSettings, setSessions, showPlaylist, showSettings, audio } = useAppStore();
 
-  // Load persisted playlist + settings from main process on mount
+  // Load persisted playlist + settings + sessions from main process on mount
   useEffect(() => {
     window.api.getStore().then(data => {
       setPlaylist(data.playlist);
       updateSettings(data.settings);
+      setSessions(data.sessions ?? []);
     });
   }, []);
 

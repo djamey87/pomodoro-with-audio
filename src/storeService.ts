@@ -11,6 +11,7 @@ const DEFAULTS: AppData = {
     longBreakMinutes: 20,
     longBreakInterval: 4,
   },
+  sessions: [],
 };
 
 let storePath: string;
@@ -26,12 +27,13 @@ export function readStore(): AppData {
       return {
         playlist: raw.playlist ?? DEFAULTS.playlist,
         settings: { ...DEFAULTS.settings, ...(raw.settings ?? {}) },
+        sessions: raw.sessions ?? DEFAULTS.sessions,
       };
     }
   } catch {
     // ignore parse errors, return defaults
   }
-  return { ...DEFAULTS, settings: { ...DEFAULTS.settings } };
+  return { ...DEFAULTS, settings: { ...DEFAULTS.settings }, sessions: [] };
 }
 
 export function writeStore(data: AppData): void {
