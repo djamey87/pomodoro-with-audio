@@ -68,7 +68,7 @@ app.whenReady().then(() => {
   ipcMain.on('set-compact-mode', (_e, compact: boolean) => {
     if (!mainWindow) return;
     if (compact) {
-      const w = 260, h = 135;
+      const w = 130, h = 180;
       mainWindow.setMinimumSize(w, h);
       mainWindow.setSize(w, h, false);
       const display = screen.getDisplayNearestPoint(mainWindow.getBounds());
