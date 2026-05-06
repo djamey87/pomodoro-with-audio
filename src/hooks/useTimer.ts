@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
 import { playChime } from '../chime';
 
-export function useTimer(audioRef: React.React.RefObject<HTMLAudioElement>) {
+export function useTimer(audioRef: React.RefObject<HTMLAudioElement>) {
   const isRunning = useAppStore(s => s.timer.isRunning);
   const wasAudioPlayingOnPause = useAppStore(s => s.timer.wasAudioPlayingOnPause);
   const prevIsRunning = useRef(false);

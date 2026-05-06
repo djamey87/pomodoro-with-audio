@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { SkipBack, SkipForward, Play, Pause, Volume, Volume1, Volume2, VolumeX } from 'lucide-react';
 import type { Track } from '../types';
 
@@ -56,16 +56,10 @@ export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlayNext, on
     setProgress(fraction);
   }, [onSeek]);
 
-  if (!track) {
-    return (
-      <div className="flex items-center justify-center h-16 px-4 text-slate-500 text-xs border-t border-slate-700">
-        No track selected — add music to your playlist
-      </div>
-    );
-  }
-
-  // Subscribe to time updates from the lifted <audio> element
-  React.useEffect(() => {
+  // Subscribe to time updates from the lifted <audio> element.
+  // Must run on every render where the audio element is mounted; placed
+  // BEFORE the early return so hook order stays stable.
+  useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
     el.addEventListener('timeupdate', handleTimeUpdate);
@@ -74,7 +68,15 @@ export function AudioPlayer({ audioRef, track, isPlaying, volume, onPlayNext, on
       el.removeEventListener('timeupdate', handleTimeUpdate);
       el.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [handleTimeUpdate, handleLoadedMetadata, audioRef.current]);
+  }, [handleTimeUpdate, handleLoadedMetadata]);
+
+  if (!track) {
+    return (
+      <div className="flex items-center justify-center h-16 px-4 text-slate-500 text-xs border-t border-slate-700">
+        No track selected — add music to your playlist
+      </div>
+    );
+  }
 
   return (
     <div className="border-t border-slate-700 px-4 py-2.5 flex flex-col gap-1.5">
