@@ -58,78 +58,70 @@ export default function App() {
     />
   );
 
-  if (compactMode) {
-    return (
-      <>
-        {audioElement}
+  // Single Fragment root keeps the <audio> element at a stable position in
+  // the React tree across compact↔normal toggles, so playback survives the
+  // mode switch (different parent shapes would force a remount).
+  return (
+    <>
+      {audioElement}
+      {compactMode ? (
         <CompactView
           audioRef={audioRef}
           isAudioPlaying={audio.isPlaying}
           trackTitle={currentTrack?.title ?? null}
           onTogglePlayAudio={togglePlay}
         />
-      </>
-    );
-  }
+      ) : (
+        <div className="flex flex-col h-screen bg-slate-900 text-slate-100 select-none overflow-hidden relative">
+          {/* Titlebar — drag region */}
+          <div className="drag-region flex items-center justify-between px-3 shrink-0 h-8 bg-slate-800 border-b border-slate-700">
+            <span className="text-[11px] text-slate-400 font-medium tracking-wide">Pomodoro</span>
+            <div className="no-drag flex items-center gap-0.5">
+              <button
+                onClick={() => setCompactMode(true)}
+                title="Compact mode"
+                className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
+              >
+                <Minimize2 size={11} />
+              </button>
+              <button
+                onClick={() => window.api.minimize()}
+                className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
+              >
+                <Minus size={12} />
+              </button>
+              <button
+                onClick={() => window.api.close()}
+                className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-red-400 transition-colors"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          </div>
 
-  return (
-    <div className="flex flex-col h-screen bg-slate-900 text-slate-100 select-none overflow-hidden relative">
-      {audioElement}
+          {/* Main content */}
+          <Timer isAudioPlaying={audio.isPlaying} />
+          <AudioPlayer
+            audioRef={audioRef}
+            track={currentTrack}
+            isPlaying={audio.isPlaying}
+            volume={volume}
+            onTogglePlay={togglePlay}
+            onPlayNext={playNext}
+            onPlayPrev={playPrev}
+            onSeek={seek}
+            onVolumeChange={setVolume}
+          />
+          <TaskFooter />
 
-      {/* Titlebar — drag region */}
-      <div className="drag-region flex items-center justify-between px-3 shrink-0 h-8 bg-slate-800 border-b border-slate-700">
-        <span className="text-[11px] text-slate-400 font-medium tracking-wide">Pomodoro</span>
-        <div className="no-drag flex items-center gap-0.5">
-          <button
-            onClick={() => setCompactMode(true)}
-            title="Compact mode"
-            className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
-          >
-            <Minimize2 size={11} />
-          </button>
-          <button
-            onClick={() => window.api.minimize()}
-            className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
-          >
-            <Minus size={12} />
-          </button>
-          <button
-            onClick={() => window.api.close()}
-            className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-red-400 transition-colors"
-          >
-            <X size={12} />
-          </button>
+          {showPlaylist && <PlaylistBrowser onSelectTrack={goToTrack} />}
+          {showSettings && <SettingsPanel />}
+          {showHistory && <SessionHistoryPanel />}
+          {audio.showNextTrackPrompt && (
+            <NextTrackPrompt onAccept={handleAcceptNextTrack} onDismiss={handleDismissNextTrack} />
+          )}
         </div>
-      </div>
-
-      {/* Main content */}
-      <Timer isAudioPlaying={audio.isPlaying} />
-      <AudioPlayer
-        audioRef={audioRef}
-        track={currentTrack}
-        isPlaying={audio.isPlaying}
-        volume={volume}
-        onTogglePlay={togglePlay}
-        onPlayNext={playNext}
-        onPlayPrev={playPrev}
-        onSeek={seek}
-        onVolumeChange={setVolume}
-      />
-      <TaskFooter />
-
-      {/* Playlist drawer — shown below main content when expanded */}
-      {showPlaylist && <PlaylistBrowser onSelectTrack={goToTrack} />}
-
-      {/* Settings overlay */}
-      {showSettings && <SettingsPanel />}
-
-      {/* History overlay */}
-      {showHistory && <SessionHistoryPanel />}
-
-      {/* Next-track prompt overlay */}
-      {audio.showNextTrackPrompt && (
-        <NextTrackPrompt onAccept={handleAcceptNextTrack} onDismiss={handleDismissNextTrack} />
       )}
-    </div>
+    </>
   );
 }
